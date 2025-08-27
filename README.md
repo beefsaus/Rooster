@@ -33,7 +33,7 @@ Voor gebruikers met nul technische kennis. Deze README bevat twee stap-voor-stap
 
 ---
 
-## 📦 Bestanden in deze repo
+##  Bestanden in deze repo
 
 ```text
 .
@@ -122,7 +122,7 @@ Dit is de makkelijkste manier: de app draait “in de cloud”, jij opent een li
 
 ---
 
-## 📥 ICS importeren (korte uitleg)
+##  ICS importeren (korte uitleg)
 
 **Google Calendar (web):**  
 Instellingen tandwiel → **Instellingen** → links **Importeren en exporteren** → **Bestand importeren** → kies `.ics` → kies kalender → **Importeren**.
@@ -164,7 +164,7 @@ Dubbelklik `.ics` → kies kalender → **OK**.
 
 ---
 
-## 🧠 Veelvoorkomende problemen & oplossingen
+##  Veelvoorkomende problemen & oplossingen
 
 **“Engine openpyxl not found / Missing optional dependency 'openpyxl'”**  
 Installeer `openpyxl`:
