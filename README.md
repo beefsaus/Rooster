@@ -1,7 +1,7 @@
 # Rooster Omzetter 📅
 
-Een simpele Streamlit-app die een Excel-rooster (.xlsx) omzet naar ICS-agenda’s per docent.  
-Importeer de bestanden daarna in Outlook, Google Calendar of Apple Calendar.
+Een simpele Streamlit-app die een Excel-rooster (`.xlsx`) omzet naar **ICS-agenda’s per docent**.  
+Importeer de bestanden daarna in **Outlook, Google Calendar** of **Apple Calendar**.
 
 ---
 
@@ -10,13 +10,13 @@ Importeer de bestanden daarna in Outlook, Google Calendar of Apple Calendar.
 Voor gebruikers met nul technische kennis. Deze README bevat twee stap-voor-stap handleidingen:
 
 1. **Streamlit Community Cloud** (snel online gebruiken, geen installatie).  
-2. **Handmatige Windows-installatie** (lokaal draaien via Python).
+2. **Windows Quickstart (Desktop)** (lokaal draaien via Python, zonder virtuele omgeving).
 
 ---
 
 ## ✨ Functies
 
-- Excel (.xlsx) inlezen en kolommen automatisch herkennen (datum, tijden, groep, zaal, beschrijving, docenten).
+- Excel (`.xlsx`) inlezen en kolommen automatisch herkennen (datum, tijden, groep, zaal, beschrijving, docenten).
 - Meerdere docenten selecteren → per docent één ICS.
 - Optioneel: “allen”-events meenemen en per event aan/uit zetten.
 - Slimme beschrijvingen in ICS: lokaal, groep, vorige/toekomstige lessen, en andere lessen uit dezelfde serie.
@@ -27,115 +27,92 @@ Voor gebruikers met nul technische kennis. Deze README bevat twee stap-voor-stap
 
 ## 🧰 Benodigdheden
 
-- Een Excel-bestand (.xlsx) met kolommen voor o.a. **Datum, Van, Tot, Student groep, Zaal, Beschrijving NL, Docenten**.  
+- Een Excel-bestand (`.xlsx`) met kolommen: **Datum, Van, Tot, Student groep, Zaal, Beschrijving NL, Docenten**.  
 - Docenten kunnen in één cel staan, gescheiden door spatie/komma/slash/`;` (bijv. `Piet, Klaas/Anna`).  
-- Gebruik **“allen”** (exact dit woord) als event voor iedereen.
+- Gebruik **`allen`** (exact dit woord) als event voor iedereen.
 
 ---
 
 ## 📦 Bestanden in deze repo
 
-├─ app.py # De Streamlit-app (de code uit deze README-opdracht)
-├─ requirements.txt # Python packages
-└─ README.md # Deze handleiding
+```text
+.
+├─ app.py                # De Streamlit-app
+├─ requirements.txt      # Python packages
+└─ README.md             # Deze handleiding
 
-### requirements.txt (voorgesteld)
 streamlit>=1.33
 pandas>=2.0
 icalendar>=5.0
 openpyxl>=3.1
+Waarom openpyxl? Pandas gebruikt dit om .xlsx te lezen.
 
+🚀 Windows Quickstart (Desktop)
 
-> **Waarom openpyxl?** Pandas gebruikt dit om `.xlsx` te lezen.
+Plaats de projectmap op je Bureaublad (Desktop).
+Geen virtuele omgeving nodig.
 
----
+Stap 0: Download & installeer Python
 
-## 🚀 Snel starten (als je al Python hebt)
+Ga naar https://www.python.org/downloads/
 
-```bash
+Klik op Download Python 3.x (3.10 of 3.11 aangeraden).
+
+Belangrijk: vink “Add Python to PATH” aan tijdens de installatie.
+
+Klik Install Now en wacht tot de installatie voltooid is.
+
+Stap 1: Download de projectbestanden
+
+Klik in GitHub op Code → Download ZIP.
+
+Pak het ZIP-bestand uit op je Bureaublad (Desktop) → je krijgt de map RoosterOmzetter met o.a. app.py en requirements.txt.
+
+Stap 2: Open de opdrachtprompt (CMD) en ga naar de map
+cd %HOMEPATH%\Desktop\RoosterOmzetter
+
+Stap 3: Installeer de benodigdheden
 pip install -r requirements.txt
+
+Stap 4: Start de app
 streamlit run app.py
-Je browser opent (of ga naar):
-👉 http://localhost:8501
 
-# Handleiding – Rooster Omzetter 📅
 
----
+De app opent automatisch in je browser. Zo niet, ga handmatig naar: http://localhost:8501
+.
 
-## Handleiding 1 – Streamlit Community Cloud (géén install nodig)
+☁️ Handleiding 1 – Streamlit Community Cloud (géén install nodig)
 
 Dit is de makkelijkste manier: app draait “in de cloud”, jij opent een link.
 
-### Stap 1: Fork/Importeer de repo
-- Maak (of gebruik) een GitHub-account.  
-- Klik op **Fork** (of “Use this template”) om deze repo in jouw account te plaatsen.
+Stap 1: Fork/Importeer de repo
 
-### Stap 2: Deployen op Streamlit
-- Ga naar [https://share.streamlit.io](https://share.streamlit.io) en log in met GitHub.  
-- Klik **New app** → kies jouw repo → branch (meestal main) → app file: `app.py`.  
-- Klik **Deploy**.
+Maak (of gebruik) een GitHub-account.
 
-### Stap 3: Gebruik de app
-- Je krijgt een publieke URL. Deelbaar en direct bruikbaar.  
-- Upload je Excel → controleer kolommen → kies docent(en) → Download ICS of ZIP.
+Klik op Fork (of Use this template) om deze repo in jouw account te plaatsen.
 
-### Belangrijke hints voor Streamlit Cloud
-- **Python-versie**: kies 3.10 of 3.11 in *Advanced settings* als nodig.  
-- **Timeouts**: grote Excelbestanden kunnen langer duren. Zie ook de timeout-tips onderaan in de app.  
-- Geen secrets nodig voor deze app.  
+Stap 2: Deployen op Streamlit
 
----
+Ga naar https://share.streamlit.io
+ en log in met GitHub.
 
-## Handleiding 2 – Handmatige Windows-installatie (nul voorkennis)
+Klik New app → kies jouw repo → branch (meestal main) → app file: app.py.
 
-Volg dit precies; je hoeft niets te weten over programmeren.
+Klik Deploy.
 
+Stap 3: Gebruik de app
 
----
+Je krijgt een publieke URL. Deelbaar en direct bruikbaar.
 
-## 🚀 Snel starten (Windows)
+Upload je Excel → controleer kolommen → kies docent(en) → Download ICS of ZIP.
 
-Volg deze stappen precies. Geen programmeerkennis nodig.  
+Belangrijke hints voor Streamlit Cloud
 
----
+Python-versie: kies 3.10 of 3.11 in Advanced settings als nodig.
 
-### Stap 0: Download & installeer Python
-1. Ga naar [https://www.python.org/downloads/](https://www.python.org/downloads/).  
-2. Klik op **Download Python 3.x** (versie 3.10 of 3.11 wordt aangeraden).  
-3. **Belangrijk:** vink het vakje **“Add Python to PATH”** aan tijdens de installatie.  
-4. Klik op **Install Now** en wacht tot de installatie voltooid is.  
+Timeouts: grote Excelbestanden kunnen langer duren. Zie ook de timeout-tips onderaan in de app.
 
----
-
-### Stap 1: Download de projectbestanden
-1. Klik in GitHub op **Code → Download ZIP**.  
-2. Pak het ZIP-bestand uit op je **Bureaublad (Desktop)**.  
-3. Je krijgt een map `RoosterOmzetter` met daarin o.a.:
-   - `app.py`  
-   - `requirements.txt`  
-
----
-
-### Stap 2: Open de opdrachtprompt (CMD)
-1. Druk op **Start** → typ `cmd` → open **Opdrachtprompt**.  
-2. Ga naar de map op je Bureaublad:  
-
-```bash
-cd %HOMEPATH%\Desktop\RoosterOmzetter
-
-###Stap 3: Installeer de benodigdheden
-
-In dezelfde opdrachtprompt:
-
-pip install -r requirements.txt
-
-
-
-###Stap 4: Start de app
-
-Start de Streamlit-app met:
-
-streamlit run app.py
+Geen secrets nodig voor deze app.
 
 📥 ICS importeren (korte uitleg)
 
@@ -151,13 +128,24 @@ Dubbelklik .ics → kies kalender → OK.
 
 ⚙️ Sidebar-opties & debug
 
-Debug-modus: toont extra uitleg, tussenstappen en eventuele fouten met stacktrace.
+Debug-modus: toont extra uitleg, tussenstappen en eventuele fouten (stacktrace).
 
-Evenementen voor “allen” opnemen: voeg algemene events toe, met per event een checkbox om op te nemen/uitsluiten.
+Evenementen voor allen opnemen: voeg algemene events toe, met per event een checkbox om op te nemen/uitsluiten.
 
+📋 Voorbeeldrooster (Markdown-tabel)
 
+Formaatregels:
 
-📋 Voorbeeldrooster 
+Datum: DD-MM-JJJJ
+
+Tijd: HH:MM (24-uurs)
+
+Meerdere docenten scheiden met komma/slash/semicolon
+
+Gebruik allen (exact) als event voor iedereen
+
+Zaal mag leeg blijven (wordt “Onbekend”)
+
 Datum	Van	Tot	Student groep	Zaal	Beschrijving NL	Docenten
 02-09-2025	08:30	10:00	CRIM-1A	B.1.12	Inleiding Criminologie	Jan
 02-09-2025	10:15	12:00	CRIM-1A	B.1.12	Werkgroep Daders & Slachtoffers	Kees, Anna
@@ -165,33 +153,63 @@ Datum	Van	Tot	Student groep	Zaal	Beschrijving NL	Docenten
 03-09-2025	09:00	10:30	MED-3C	C.2.05	ABCDE	Klaas/Anna
 03-09-2025	10:45	12:15	MED-3C	C.2.05	Practicum ECG	Anna
 03-09-2025	13:15	14:45	CRIM-1A	B.1.12	Gastcollege Forensische Psychiatrie	Joost
+🧠 Veelvoorkomende problemen & oplossingen
+
+“Engine openpyxl not found / Missing optional dependency 'openpyxl'”
+
+pip install openpyxl
 
 
-## 📄 Licentie
+App start, maar browser opent niet automatisch
+→ Ga handmatig naar http://localhost:8501
+.
 
-Dit project is gelicentieerd onder de **European Union Public License (EUPL)**.  
-De EUPL is een door de Europese Commissie goedgekeurde open source licentie, speciaal ontworpen voor software die met **publieke middelen** ontwikkeld is en teruggegeven wordt aan de samenleving.
+Fout bij het lezen van het Excel-bestand
 
-### Waarom EUPL?
-- ✅ Juridisch waterdicht binnen de Europese Unie.  
-- ✅ Compatibel met andere open source licenties (zoals GPL).  
-- ✅ Waarborgt dat software ontwikkeld met publiek geld ook publiek beschikbaar blijft.  
-- ✅ Sluit naadloos aan bij de principes van **Open Science** en **FAIR data/software** (Findable, Accessible, Interoperable, Reusable).  
+Is het echt .xlsx (geen .csv, .xlsm, etc.)?
 
-### Wat betekent dit voor jou?
-- Je mag de software **vrij gebruiken, delen en aanpassen**, zowel voor persoonlijke als commerciële doeleinden.  
-- Als je de software verder verspreidt (met of zonder aanpassingen), moet dit onder dezelfde EUPL-licentie gebeuren.  
-- Zo blijft kennis die met **publieke middelen** is gemaakt ook **publiek eigendom**.  
+Datumkolom aanwezig en geldig?
 
-### Open Science 🌍
-Dit project is onderdeel van de bredere beweging naar **Open Science**:  
-- Onderzoek, data en software ontwikkeld met publieke middelen zijn vrij toegankelijk.  
-- Bevordert transparantie, samenwerking en hergebruik.  
-- Stimuleert innovatie doordat iedereen kan leren, bijdragen en verbeteren.  
+Tijden in HH:MM (bijv. 08:30).
 
-📖 Meer info over de licentie: [EUPL officiële tekst](https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)  
+Niets verschijnt bij “Docenten”
 
-## ℹ️ Transparantieverklaring
+Controleer of de docenten-kolom bestaat en is toegewezen.
 
-Delen van deze documentatie zijn mede opgesteld met behulp van **ChatGPT (AI-taalmodel van OpenAI)**.  
-De inhoud is door een menselijke beheerder gecontroleerd en aangepast waar nodig.  
+Scheid meerdere docenten met spatie/komma/slash/;.
+
+Voorbeeld: Piet, Klaas/Anna.
+
+“AxiosError: timeout exceeded” in de UI
+
+Zie tips in de app om timeouts te verhogen.
+
+Probeer een kleiner Excel-bestand.
+
+📄 Licentie
+
+Dit project is gelicentieerd onder de European Union Public License (EUPL).
+De EUPL is een door de Europese Commissie goedgekeurde open source licentie, ontworpen voor software die met publieke middelen ontwikkeld is en teruggegeven wordt aan de samenleving.
+
+Waarom EUPL?
+
+✅ Juridisch stevig binnen de Europese Unie.
+
+✅ Compatibel met andere open source licenties (zoals GPL).
+
+✅ Waarborgt dat software ontwikkeld met publiek geld ook publiek beschikbaar blijft.
+
+✅ Past bij Open Science en FAIR-principes (Findable, Accessible, Interoperable, Reusable).
+
+Wat betekent dit voor jou?
+
+Je mag de software vrij gebruiken, delen en aanpassen (ook commercieel).
+
+Verspreid je de software (met of zonder aanpassingen), dan gebeurt dit onder dezelfde EUPL.
+
+📖 Meer info: Officiële EUPL-tekst
+
+ℹ️ Transparantieverklaring
+
+Delen van deze documentatie zijn mede opgesteld met behulp van ChatGPT (AI-taalmodel van OpenAI).
+De inhoud is door een menselijke beheerder gecontroleerd en waar nodig aangepast.
