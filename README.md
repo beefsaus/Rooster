@@ -35,7 +35,6 @@ Voor gebruikers met nul technische kennis. Deze README bevat twee stap-voor-stap
 
 ## 📦 Bestanden in deze repo
 
-```text
 .
 ├─ app.py                # De Streamlit-app
 ├─ requirements.txt      # Python packages
@@ -45,6 +44,7 @@ streamlit>=1.33
 pandas>=2.0
 icalendar>=5.0
 openpyxl>=3.1
+
 Waarom openpyxl? Pandas gebruikt dit om .xlsx te lezen.
 
 🚀 Windows Quickstart (Desktop)
