@@ -1,3 +1,4 @@
+
 @echo off
 setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 title Rooster Omzetter - Super Simpele Starter (Windows)
@@ -18,7 +19,7 @@ echo #  4) De app starten                                                     #
 echo #########################################################################
 echo.
 echo BELANGRIJK:
-echo - Zorg dat deze file ^(start.bat^) in dezelfde map staat als app.py en requirements.txt.
+echo - Zorg dat deze file ^(start.bat^) in dezelfde map staat als streamlit_app.py en requirements.txt.
 echo - Dit script gebruikt GEEN virtuele omgeving; alles is lokaal per gebruiker.
 echo.
 
@@ -35,15 +36,15 @@ REM 1) Basiscontroles
 REM ================================
 echo.
 echo [Stap 1] Controleren of we in de juiste map staan...
-if not exist "app.py" (
-  echo [FOUT] app.py niet gevonden in deze map: %CD%
-  echo Zet start.bat, app.py en requirements.txt bij elkaar in dezelfde map.
+if not exist "streamlit_app.py" (
+  echo [FOUT] streamlit_app.py niet gevonden in deze map: %CD%
+  echo Zet start.bat, streamlit_app.py en requirements.txt bij elkaar in dezelfde map.
   pause
   exit /b 1
 )
 if not exist "requirements.txt" (
   echo [FOUT] requirements.txt niet gevonden in deze map: %CD%
-  echo Zet start.bat, app.py en requirements.txt bij elkaar in dezelfde map.
+  echo Zet start.bat, streamlit_app.py en requirements.txt bij elkaar in dezelfde map.
   pause
   exit /b 1
 )
@@ -147,7 +148,7 @@ echo.
 echo [Stap 5] De app wordt nu gestart. Er opent normaal gesproken een browservenster.
 echo Als dat niet gebeurt, ga dan handmatig naar: http://localhost:8501
 echo.
-%PYTHON% -m streamlit run app.py
+%PYTHON% -m streamlit run streamlit_app.py
 if errorlevel 1 (
   echo [FOUT] Streamlit kon niet starten.
   echo Controleer eventuele foutmeldingen hierboven.
