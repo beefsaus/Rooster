@@ -37,7 +37,7 @@ Deze README bevat twee stap-voor-stap handleidingen:
 
 ```text
 .
-├─ app.py                # De Streamlit-app
+├─ streamlit_app.py                # De Streamlit-app
 ├─ requirements.txt      # Python packages
 └─ README.md             # Deze handleiding
 ```
