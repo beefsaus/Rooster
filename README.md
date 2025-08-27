@@ -205,7 +205,6 @@ De EUPL is een door de Europese Commissie goedgekeurde open source licentie, ont
 
 **Waarom EUPL?**
 
-- ✅ Juridisch stevig binnen de Europese Unie.  
 - ✅ Compatibel met andere open source licenties (zoals GPL).  
 - ✅ Waarborgt dat software ontwikkeld met publiek geld ook publiek beschikbaar blijft.  
 - ✅ Past bij Open Science en FAIR-principes (Findable, Accessible, Interoperable, Reusable).
@@ -221,5 +220,5 @@ De EUPL is een door de Europese Commissie goedgekeurde open source licentie, ont
 
 ## ℹ️ Transparantieverklaring
 
-Delen van deze documentatie zijn mede opgesteld met behulp van ChatGPT (AI-taalmodel van OpenAI).  
+Delen van deze documentatie en de software zijn mede opgesteld met behulp van ChatGPT (AI-taalmodel van OpenAI).  
 De inhoud is door een menselijke beheerder gecontroleerd en waar nodig aangepast.
