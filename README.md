@@ -99,7 +99,9 @@ De app opent automatisch in je browser. Zo niet, ga handmatig naar: <http://loca
 Plaats de projectmap op je Bureaublad (Desktop).  
 Probeer eerst de start_macos.Command
 
-## ☁️ HStreamlit Community Cloud (géén install nodig)
+## ☁️ Streamlit Community Cloud (géén install nodig)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://rooster-agoyze36jn9rcikioecbeo.streamlit.app/)
+
 
 Dit is de makkelijkste manier: de app draait “in de cloud”, jij opent een link.
 
