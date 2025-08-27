@@ -94,8 +94,12 @@ streamlit run app.py
 De app opent automatisch in je browser. Zo niet, ga handmatig naar: <http://localhost:8501>.
 
 ---
+## 🚀 Macos Quickstart (Desktop)
 
-## ☁️ Handleiding 1 – Streamlit Community Cloud (géén install nodig)
+Plaats de projectmap op je Bureaublad (Desktop).  
+Probeer eerst de start_macos.Command
+
+## ☁️ HStreamlit Community Cloud (géén install nodig)
 
 Dit is de makkelijkste manier: de app draait “in de cloud”, jij opent een link.
 
