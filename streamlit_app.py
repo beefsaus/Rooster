@@ -19,12 +19,12 @@ NL_MONTHS = {
 }
 
 # ===============================================================
-# PAGINA-INSTELLINGEN (altijd helemaal bovenaan laten staan)
+# PAGINA-INSTELLINGEN
 # ===============================================================
 st.set_page_config(page_title="Rooster Omzetter", page_icon="📅", layout="wide")
 
 # ===============================================================
-# EIGEN STIJL (CSS) – uiterlijk van de app
+# EIGEN STIJL (CSS)
 # ===============================================================
 st.markdown("""
     <style>
@@ -39,15 +39,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===============================================================
-# HULPFUNCTIES VOOR DEBUG / LOGGING
+# DEBUG FUNCTIES
 # ===============================================================
-
-# Simpele "aan/uit"-schakelaar voor extra debug-teksten
 st.sidebar.markdown("<div class='sidebar'><h3>Instellingen</h3></div>", unsafe_allow_html=True)
-debug_mode = st.sidebar.checkbox("Debug-modus (aanbevolen bij problemen)", value=False, help="Toon extra uitleg, tussenstappen en controles.")
+debug_mode = st.sidebar.checkbox("Debug-modus (aanbevolen bij problemen)", value=False)
 
 def dbg(title, value=None):
-    """Toon extra debug-info als de debug-modus aan staat."""
     if debug_mode:
         with st.expander(f"🔎 {title}", expanded=False):
             if value is not None:
@@ -59,83 +56,58 @@ def dbg(title, value=None):
                 st.write("OK")
 
 def safe_section(step_title):
-    """Contextmanager-achtig patroon voor nette stap-timing in debug."""
     class _Section:
         def __enter__(self_inner):
             self_inner.t0 = perf_counter()
-            if debug_mode:
-                st.info(f"Start: {step_title}")
+            if debug_mode: st.info(f"Start: {step_title}")
         def __exit__(self_inner, exc_type, exc, tb):
             dt = perf_counter() - self_inner.t0
             if exc:
                 st.error(f"❌ Fout in '{step_title}': {exc}")
-                if debug_mode and tb:
-                    st.exception(exc)
+                if debug_mode and tb: st.exception(exc)
             else:
-                if debug_mode:
-                    st.success(f"Klaar: {step_title} ({dt:.2f}s)")
+                if debug_mode: st.success(f"Klaar: {step_title} ({dt:.2f}s)")
     return _Section()
 
 # ===============================================================
-# HULPFUNCTIES – DATA BEWERKEN (met NL-uitleg in comments)
+# HULPFUNCTIES DATA
 # ===============================================================
-
 def to_dt(date_val, dayfirst=True):
-    """Altijd robuust naar pandas.Timestamp (datum, geen tijd)."""
     return pd.to_datetime(date_val, dayfirst=dayfirst, errors="coerce").normalize()
 
 def dutch_date_str(ts):
-    """Maak 'woensdag 14 maart 2024' van een Timestamp/Date."""
-    if isinstance(ts, (pd.Timestamp, datetime)):
-        d = ts
-    else:
-        d = to_dt(ts)
-    if pd.isna(d):
-        return "onbekende datum"
+    if isinstance(ts, (pd.Timestamp, datetime)): d = ts
+    else: d = to_dt(ts)
+    if pd.isna(d): return "onbekende datum"
     s = d.strftime("%A %d %B %Y")
-    for en, nl in NL_WEEKDAYS.items():
-        s = s.replace(en, nl)
-    for en, nl in NL_MONTHS.items():
-        s = s.replace(en, nl)
+    for en, nl in NL_WEEKDAYS.items(): s = s.replace(en, nl)
+    for en, nl in NL_MONTHS.items(): s = s.replace(en, nl)
     return s
 
 def parse_time(time_str):
-    """Zet '08:30' om naar time(). Valt terug op 00:00 bij fouten (met debugmelding)."""
     if isinstance(time_str, str):
-        try:
-            return datetime.strptime(time_str.strip(), "%H:%M").time()
+        try: return datetime.strptime(time_str.strip(), "%H:%M").time()
         except Exception:
             dbg("⚠️ Onverwacht tijdformaat aangetroffen", time_str)
             return dt_time(0, 0)
-    elif isinstance(time_str, dt_time):
-        return time_str
+    elif isinstance(time_str, dt_time): return time_str
     else:
         dbg("⚠️ Tijdveld is geen tekst of tijdobject", str(type(time_str)))
         return dt_time(0, 0)
 
 def split_docenten(docent_cell):
-    """
-    Maak van één tekstveld met docenten (bijv. 'Piet, Klaas/Anna')
-    een lijst met losse docentcodes/namen.
-    Scheidingstekens: spatie, komma, slash, puntkomma.
-    """
     if isinstance(docent_cell, str):
         parts = re.split(r'[\s,/;]+', docent_cell.strip())
         return [p for p in parts if p]
     return []
 
 def is_allen_only(row, col):
-    """Controleer of in de docenten-kolom alléén 'allen' staat."""
     teachers = [t.lower() for t in split_docenten(row[col])]
     return "allen" in teachers and len(teachers) == 1
 
 def sort_df_chronologically(df, column_vars):
-    """
-    Geef een *kopie* terug die is gesorteerd op datum + starttijd, met hulpkolommen:
-    _dt (Timestamp datum), _tstart (Timestamp tijd op 1900-01-01), en orig_idx (originele index uit df).
-    """
     out = df.copy()
-    out["orig_idx"] = df.index  # originele index bewaren voor koppeling aan sidebar-keuzes
+    out["orig_idx"] = df.index
     out["_dt"] = pd.to_datetime(out[column_vars["Datum"]], dayfirst=True, errors="coerce")
     out["_tstart"] = out[column_vars["Van"]].apply(parse_time)
     out["_tstart"] = out["_tstart"].apply(
@@ -144,26 +116,28 @@ def sort_df_chronologically(df, column_vars):
     out = out.sort_values(["_dt", "_tstart", column_vars["Beschrijving NL"]], kind="mergesort").reset_index(drop=True)
     return out
 
-def get_serie_info(row, df, column_vars):
+def get_future_series_teachers(row, df, column_vars):
     """
-    Andere regels met dezelfde beschrijving + studentengroep.
-    Toon datum erbij en verwijder dubbelen.
+    Voor dezelfde beschrijving + groep: toekomstige lessen met docent(en).
     """
+    cur_dt = row.get("_dt")
+    if pd.isna(cur_dt):
+        cur_dt = pd.to_datetime(row[column_vars["Datum"]], dayfirst=True, errors="coerce")
+
     same_desc = df[column_vars["Beschrijving NL"]] == row[column_vars["Beschrijving NL"]]
     same_grp  = df[column_vars["Student groep"]]   == row[column_vars["Student groep"]]
-    serie_rows = df[same_desc & same_grp]
+    future    = df["_dt"] > cur_dt
+
+    serie_rows = df[same_desc & same_grp & future]
 
     lines, seen = [], set()
     for _, srow in serie_rows.iterrows():
-        if srow.name == row.name:
-            continue
         dt = srow.get("_dt")
         if pd.isna(dt):
             dt = pd.to_datetime(srow[column_vars["Datum"]], dayfirst=True, errors="coerce")
         date_txt = dutch_date_str(dt)
-
         teacher_list = split_docenten(srow[column_vars["Docenten"]])
-        teacher_str  = ", ".join(teacher_list)
+        teacher_str  = ", ".join(teacher_list) if teacher_list else "onbekend"
         zaal         = srow[column_vars["Zaal"]]
         line = f"{date_txt} – {teacher_str} (lokaal: {zaal})"
         if line not in seen:
@@ -177,8 +151,7 @@ def autodetect_date_column(df):
             try:
                 pd.to_datetime(val, dayfirst=True)
                 return col
-            except Exception:
-                continue
+            except: continue
     return None
 
 def autodetect_time_columns(df):
@@ -186,52 +159,35 @@ def autodetect_time_columns(df):
     for col in df.columns:
         vals = df[col].dropna().astype(str).head(10)
         count = sum(1 for val in vals if re.match(r'^\d{1,2}:\d{2}$', val.strip()))
-        if count >= 3:
-            time_candidates.append(col)
-    if len(time_candidates) >= 2:
-        return time_candidates[0], time_candidates[1]
-    elif len(time_candidates) == 1:
-        return time_candidates[0], None
-    else:
-        return None, None
+        if count >= 3: time_candidates.append(col)
+    if len(time_candidates) >= 2: return time_candidates[0], time_candidates[1]
+    elif len(time_candidates) == 1: return time_candidates[0], None
+    else: return None, None
 
 def autodetect_studentgroep(df):
     for col in df.columns:
-        if "groep" in col.lower():
-            return col
+        if "groep" in col.lower(): return col
     return None
 
 def autodetect_zaal(df):
     for col in df.columns:
-        if "zaal" in col.lower():
-            return col
+        if "zaal" in col.lower(): return col
     return None
 
 def autodetect_beschrijving(df):
     for col in df.columns:
-        if "beschrijving" in col.lower():
-            return col
+        if "beschrijving" in col.lower(): return col
     return None
 
 def autodetect_docenten(df):
     for col in df.columns:
-        if "docent" in col.lower():
-            return col
+        if "docent" in col.lower(): return col
     return None
 
 def get_lesson_history(selected_columns, docent, group, current_pos, df_sorted, history_type, current_desc=None):
-    """
-    Lijst met eerdere/komende lessen voor docent + groep, beperkt tot dezelfde beschrijving (indien meegegeven).
-    df_sorted: al chronologisch gesorteerd; current_pos is positionele index binnen df_sorted.
-    """
     lessons = []
     docent_l = (docent or "").strip().lower()
-
-    if history_type == "previous":
-        rows = df_sorted.iloc[:current_pos]
-    else:
-        rows = df_sorted.iloc[current_pos + 1:]
-
+    rows = df_sorted.iloc[:current_pos] if history_type=="previous" else df_sorted.iloc[current_pos+1:]
     for _, row in rows.iterrows():
         teachers_in_row = [t.strip().lower() for t in split_docenten(row.get(selected_columns["Docenten"], ""))]
         same_teacher = docent_l in teachers_in_row
@@ -241,58 +197,37 @@ def get_lesson_history(selected_columns, docent, group, current_pos, df_sorted, 
             dt = row.get("_dt")
             besch = row.get(selected_columns["Beschrijving NL"], "")
             lessons.append(f"{besch} , {dutch_date_str(dt)}")
-
-    # Uniek + volgorde behouden
-    seen = set()
-    uniq = []
+    seen, uniq = set(), []
     for x in lessons:
         if x not in seen:
-            seen.add(x)
-            uniq.append(x)
+            seen.add(x); uniq.append(x)
     return uniq
 
 # ===============================================================
-# ICS-GENERATIE (als bytes teruggeven) – met extra checks
+# ICS-GENERATIE
 # ===============================================================
 def generate_ics_bytes(docent, df_filtered, df_full, column_vars, include_allen_var):
-    """
-    Maak één agenda-bestand (ICS) voor een docent.
-    """
     try:
         docent_lower = docent.lower()
-
-        # Sorteer 1x chronologisch, met orig_idx voor koppeling aan sidebar-keuzes
         base_sorted = sort_df_chronologically(df_full, column_vars)
-
-        # Filter: regels waar deze docent in staat, maar NIET alleen 'allen'
         teacher_df = base_sorted[base_sorted.apply(
             lambda row: docent_lower in [t.lower() for t in split_docenten(row[column_vars["Docenten"]])]
                         and not is_allen_only(row, column_vars["Docenten"]),
             axis=1
         )].reset_index(drop=True)
-
-        dbg(f"Docentfilter toegepast voor '{docent}'", f"Aantal regels: {len(teacher_df)}")
-
         cal = Calendar()
         cal.add("version", "2.0")
         cal.add("prodid", "-//Rooster Omzetter//NONSGML v1.0//NL")
 
-        # --- Docent-specifieke regels verwerken
         for pos, row in teacher_df.iterrows():
             try:
                 datum_parsed = to_dt(row[column_vars["Datum"]]).date()
-                van_tijd = parse_time(row[column_vars["Van"]])
-                tot_tijd = parse_time(row[column_vars["Tot"]])
-                dtstart = datetime.combine(datum_parsed, van_tijd)
-                dtend = datetime.combine(datum_parsed, tot_tijd)
-
+                van_tijd, tot_tijd = parse_time(row[column_vars["Van"]]), parse_time(row[column_vars["Tot"]])
+                dtstart, dtend = datetime.combine(datum_parsed, van_tijd), datetime.combine(datum_parsed, tot_tijd)
                 event = Event()
-                teacher_list = split_docenten(row[column_vars["Docenten"]])
-                teacher_str = ", ".join(teacher_list)
-                event_summary = f"{row[column_vars['Beschrijving NL']]} - {teacher_str}"
-                event.add("summary", event_summary)
-                event.add("dtstart", dtstart)
-                event.add("dtend", dtend)
+                teacher_str = ", ".join(split_docenten(row[column_vars["Docenten"]]))
+                event.add("summary", f"{row[column_vars['Beschrijving NL']]} - {teacher_str}")
+                event.add("dtstart", dtstart); event.add("dtend", dtend)
 
                 description = f"{row[column_vars['Beschrijving NL']]} - Groep: {row[column_vars['Student groep']]}"
                 description += f"\nLokaal: {row[column_vars['Zaal']]}"
@@ -301,188 +236,118 @@ def generate_ics_bytes(docent, df_filtered, df_full, column_vars, include_allen_
                 prev_lessons = get_lesson_history(column_vars, docent, row[column_vars["Student groep"]],
                                                   pos, teacher_df, "previous", current_desc)
                 fut_lessons  = get_lesson_history(column_vars, docent, row[column_vars["Student groep"]],
-                                                  pos, teacher_df, "future",  current_desc)
-                if prev_lessons:
-                    description += "\n\nVorige lessen:\n" + "\n".join(prev_lessons)
-                if fut_lessons:
-                    description += "\n\nToekomstige lessen:\n" + "\n".join(fut_lessons)
+                                                  pos, teacher_df, "future", current_desc)
+                if prev_lessons: description += "\n\nVorige lessen:\n" + "\n".join(prev_lessons)
+                if fut_lessons:  description += "\n\nToekomstige lessen:\n" + "\n".join(fut_lessons)
 
-                serie_info = get_serie_info(row, base_sorted, column_vars)
-                if serie_info:
-                    description += "\n\nAndere lessen in deze serie:\n" + "\n".join(serie_info)
+                serie_future = get_future_series_teachers(row, base_sorted, column_vars)
+                if serie_future:
+                    description += "\n\nAndere lessen in deze serie (komend, met docent):\n" + "\n".join(serie_future)
 
-                event.add("description", description)
-                cal.add_component(event)
-
+                event.add("description", description); cal.add_component(event)
             except Exception as inner_e:
                 st.warning(f"Regel overgeslagen (pos={pos}) door fout: {inner_e}")
-                if debug_mode:
-                    st.code(traceback.format_exc())
+                if debug_mode: st.code(traceback.format_exc())
 
-        # --- Eventuele 'allen'-regels meenemen (alleen als gebruiker dat wil)
         if include_allen_var:
             allen_df = base_sorted[base_sorted.apply(
-                lambda row: is_allen_only(row, column_vars["Docenten"]),
-                axis=1
+                lambda row: is_allen_only(row, column_vars["Docenten"]), axis=1
             )].reset_index(drop=True)
-            dbg("Aantal 'allen'-regels", len(allen_df))
-
             for pos, row in allen_df.iterrows():
                 try:
-                    # Respecteer de keuzes uit de sidebar (keys zijn op basis van originele df-index)
                     orig_idx = row.get("orig_idx", None)
                     if "allen_inclusion" in st.session_state and orig_idx is not None:
-                        if not st.session_state.allen_inclusion.get(orig_idx, True):
-                            dbg("Allen-regel uitgesloten door gebruiker", orig_idx)
-                            continue
-
+                        if not st.session_state.allen_inclusion.get(orig_idx, True): continue
                     datum_parsed = to_dt(row[column_vars["Datum"]]).date()
-                    van_tijd = parse_time(row[column_vars["Van"]])
-                    tot_tijd = parse_time(row[column_vars["Tot"]])
-                    dtstart = datetime.combine(datum_parsed, van_tijd)
-                    dtend = datetime.combine(datum_parsed, tot_tijd)
-
+                    van_tijd, tot_tijd = parse_time(row[column_vars["Van"]]), parse_time(row[column_vars["Tot"]])
+                    dtstart, dtend = datetime.combine(datum_parsed, van_tijd), datetime.combine(datum_parsed, tot_tijd)
                     event = Event()
-                    teacher_list = split_docenten(row[column_vars["Docenten"]])
-                    teacher_str = ", ".join(teacher_list)
-                    event_summary = f"{row[column_vars['Beschrijving NL']]} - {teacher_str}"
-                    event.add("summary", event_summary)
-                    event.add("dtstart", dtstart)
-                    event.add("dtend", dtend)
-
+                    teacher_str = ", ".join(split_docenten(row[column_vars["Docenten"]]))
+                    event.add("summary", f"{row[column_vars['Beschrijving NL']]} - {teacher_str}")
+                    event.add("dtstart", dtstart); event.add("dtend", dtend)
                     description = f"{row[column_vars['Beschrijving NL']]} - Groep: {row[column_vars['Student groep']]}"
                     description += f"\nLokaal: {row[column_vars['Zaal']]}"
-
                     current_desc = row[column_vars["Beschrijving NL"]]
                     prev_lessons = get_lesson_history(column_vars, "allen", row[column_vars["Student groep"]],
                                                       pos, allen_df, "previous", current_desc)
                     fut_lessons  = get_lesson_history(column_vars, "allen", row[column_vars["Student groep"]],
-                                                      pos, allen_df, "future",  current_desc)
-                    if prev_lessons:
-                        description += "\n\nVorige lessen:\n" + "\n".join(prev_lessons)
-                    if fut_lessons:
-                        description += "\n\nToekomstige lessen:\n" + "\n".join(fut_lessons)
-
-                    serie_info = get_serie_info(row, base_sorted, column_vars)
-                    if serie_info:
-                        description += "\n\nAndere lessen in deze serie:\n" + "\n".join(serie_info)
-
-                    event.add("description", description)
-                    cal.add_component(event)
-
+                                                      pos, allen_df, "future", current_desc)
+                    if prev_lessons: description += "\n\nVorige lessen:\n" + "\n".join(prev_lessons)
+                    if fut_lessons:  description += "\n\nToekomstige lessen:\n" + "\n".join(fut_lessons)
+                    serie_future = get_future_series_teachers(row, base_sorted, column_vars)
+                    if serie_future:
+                        description += "\n\nAndere lessen in deze serie (komend, met docent):\n" + "\n".join(serie_future)
+                    event.add("description", description); cal.add_component(event)
                 except Exception as inner_e:
                     st.warning(f"'Allen'-regel overgeslagen (pos={pos}) door fout: {inner_e}")
-                    if debug_mode:
-                        st.code(traceback.format_exc())
+                    if debug_mode: st.code(traceback.format_exc())
 
-        # Geef de ICS-inhoud als bytes terug
-        ics_bytes = cal.to_ical()
-        dbg("ICS-bytes gegenereerd (lengte)", len(ics_bytes))
-        return ics_bytes
-
+        return cal.to_ical()
     except Exception as e:
         st.error(f"Er is een fout opgetreden voor docent {docent}:\n{e}")
-        if debug_mode:
-            st.code(traceback.format_exc())
+        if debug_mode: st.code(traceback.format_exc())
         return None
 
 # ===============================================================
-# CACHES – om sneller te werken bij herhaald uitvoeren
+# CACHE
 # ===============================================================
 @st.cache_data(show_spinner=False)
-def load_excel(file):
-    """Lees het Excel-bestand in als DataFrame."""
-    return pd.read_excel(file)
+def load_excel(file): return pd.read_excel(file)
 
 @st.cache_data(show_spinner=False)
 def cached_generate_ics_bytes(docent, df, column_vars, include_allen_var):
-    """Cache per docent de gegenereerde ICS-bytes."""
     return generate_ics_bytes(docent, df, df, column_vars, include_allen_var)
 
 # ===============================================================
-# HOOFD-INTERFACE VAN DE APP
+# UI
 # ===============================================================
 st.title("Rooster Omzetter 📅")
 st.markdown("""
 **Welkom!**  
-Deze tool zet een Excel-rooster om naar agenda-afspraken (ICS-bestanden) die je kunt importeren in je agenda (Outlook, Google Calendar, Apple Calendar, etc.).
-Volg de stappen hieronder.
+Deze tool zet een Excel-rooster om naar ICS-agendagegevens.
 """)
 st.markdown("---")
 
-# ---------- Stap 1: Upload ----------
+# Upload
 with safe_section("Excel uploaden en inlezen"):
     with st.expander("Stap 1: Upload je Excel-bestand", expanded=True):
-        st.info("Upload een Excel-bestand (.xlsx) met het rooster.")
         uploaded_file = st.file_uploader("Kies je Excel-bestand", type="xlsx")
         df = None
         if uploaded_file:
-            with st.spinner("Excel-bestand laden..."):
-                df = load_excel(uploaded_file)
+            df = load_excel(uploaded_file)
             st.success("Excel-bestand succesvol geladen!")
-            dbg("Eerste 5 rijen van de data", df.head())
-            dbg("Kolomnamen", list(df.columns))
-            dbg("Vorm (rows, columns)", df.shape)
+            dbg("Eerste 5 rijen", df.head()); dbg("Kolommen", list(df.columns))
 
-# ---------- Stap 2: Kolommen ----------
-column_vars = {}
-columns_set = False
+# Kolommen
+column_vars, columns_set = {}, False
 if df is not None:
-    with safe_section("Kolommen herkennen en kiezen"):
-        st.markdown("## Stap 2: Kolominstellingen")
-        st.write("We proberen de kolommen automatisch te herkennen. Controleer en pas aan indien nodig.")
-
-        detected_datum       = autodetect_date_column(df)
+    with safe_section("Kolommen"):
+        detected_datum = autodetect_date_column(df)
         detected_van, detected_tot = autodetect_time_columns(df)
-        detected_studentgroep = autodetect_studentgroep(df)
-        detected_zaal         = autodetect_zaal(df)
-        detected_beschrijving = autodetect_beschrijving(df)
-        detected_docenten     = autodetect_docenten(df)
-
-        dbg("Automatisch gedetecteerd", {
-            "Datum": detected_datum,
-            "Van": detected_van,
-            "Tot": detected_tot,
-            "Student groep": detected_studentgroep,
-            "Zaal": detected_zaal,
-            "Beschrijving NL": detected_beschrijving,
-            "Docenten": detected_docenten
-        })
-
+        detected_studentgroep, detected_zaal = autodetect_studentgroep(df), autodetect_zaal(df)
+        detected_beschrijving, detected_docenten = autodetect_beschrijving(df), autodetect_docenten(df)
         available_columns = df.columns.tolist()
-        with st.container():
-            st.markdown('<div class="box">', unsafe_allow_html=True)
-            column_vars["Datum"] = st.selectbox("Kolom voor **Datum**", options=available_columns,
-                index=available_columns.index(detected_datum) if detected_datum in available_columns else 0)
-            column_vars["Van"] = st.selectbox("Kolom voor **Van** (starttijd)", options=available_columns,
-                index=available_columns.index(detected_van) if detected_van in available_columns else 0)
-            column_vars["Tot"] = st.selectbox("Kolom voor **Tot** (eindtijd)", options=available_columns,
-                index=available_columns.index(detected_tot) if detected_tot in available_columns else 0)
-            column_vars["Student groep"] = st.selectbox("Kolom voor **Student groep**", options=available_columns,
-                index=available_columns.index(detected_studentgroep) if detected_studentgroep in available_columns else 0)
-            column_vars["Zaal"] = st.selectbox("Kolom voor **Zaal**", options=available_columns,
-                index=available_columns.index(detected_zaal) if detected_zaal in available_columns else 0)
-            column_vars["Beschrijving NL"] = st.selectbox("Kolom voor **Beschrijving NL**", options=available_columns,
-                index=available_columns.index(detected_beschrijving) if detected_beschrijving in available_columns else 0)
-            column_vars["Docenten"] = st.selectbox("Kolom voor **Docenten**", options=available_columns,
-                index=available_columns.index(detected_docenten) if detected_docenten in available_columns else 0)
-            st.markdown('</div>', unsafe_allow_html=True)
-
+        column_vars["Datum"] = st.selectbox("Kolom Datum", available_columns,
+            index=available_columns.index(detected_datum) if detected_datum in available_columns else 0)
+        column_vars["Van"] = st.selectbox("Kolom Van", available_columns,
+            index=available_columns.index(detected_van) if detected_van in available_columns else 0)
+        column_vars["Tot"] = st.selectbox("Kolom Tot", available_columns,
+            index=available_columns.index(detected_tot) if detected_tot in available_columns else 0)
+        column_vars["Student groep"] = st.selectbox("Kolom Student groep", available_columns,
+            index=available_columns.index(detected_studentgroep) if detected_studentgroep in available_columns else 0)
+        column_vars["Zaal"] = st.selectbox("Kolom Zaal", available_columns,
+            index=available_columns.index(detected_zaal) if detected_zaal in available_columns else 0)
+        column_vars["Beschrijving NL"] = st.selectbox("Kolom Beschrijving NL", available_columns,
+            index=available_columns.index(detected_beschrijving) if detected_beschrijving in available_columns else 0)
+        column_vars["Docenten"] = st.selectbox("Kolom Docenten", available_columns,
+            index=available_columns.index(detected_docenten) if detected_docenten in available_columns else 0)
         if all(col in available_columns for col in column_vars.values()):
-            st.success("Alle benodigde kolommen zijn toegewezen!")
-            columns_set = True
-        else:
-            st.error("Niet alle kolommen zijn correct toegewezen. Controleer de kolominstellingen.")
+            st.success("Kolommen toegewezen!"); columns_set = True
 
-# ---------- Extra instellingen ----------
-include_allen_var = st.sidebar.checkbox(
-    "Evenementen voor 'allen' opnemen",
-    value=False,
-    key="include_allen",
-    help="Zet aan om algemene ('allen') afspraken ook te maken."
-)
+# Extra instellingen
+include_allen_var = st.sidebar.checkbox("Evenementen voor 'allen' opnemen", value=False, key="include_allen")
 
-# Toon en laat individuele 'allen'-rigen aan/uit zetten
+# 'Allen' selectie (op basis van originele df-indexen)
 if include_allen_var and df is not None and columns_set:
     with safe_section("'Allen'-evenementen voorbereiden"):
         allen_rows = df[df.apply(lambda row: is_allen_only(row, column_vars["Docenten"]), axis=1)]
@@ -499,12 +364,11 @@ if include_allen_var and df is not None and columns_set:
             st.session_state.allen_inclusion = allen_inclusion
         dbg("'Allen' voorbeeldregels (max 5)", allen_rows.head())
 
-# ---------- Stap 3: Docenten kiezen ----------
+# Docenten kiezen
 selected_docenten = []
 if df is not None and columns_set:
     with safe_section("Docentenlijst opbouwen en selectie"):
-        st.markdown("## Stap 3: Selecteer de docent(en)")
-        st.write("Kies voor welke docent(en) je een agenda-bestand wilt maken.")
+        st.markdown("## Selecteer docent(en)")
         docenten_set = set()
         for cell in df[column_vars["Docenten"]].dropna().astype(str):
             for teacher in split_docenten(cell):
@@ -512,17 +376,12 @@ if df is not None and columns_set:
         docenten = sorted(docenten_set)
         st.write("Gevonden docenten:", ", ".join(docenten) if docenten else "— niets gevonden —")
         selected_docenten = st.multiselect("Kies docent(en)", docenten)
-        if selected_docenten:
-            st.success("Docenten geselecteerd!")
-        else:
-            dbg("Geen docenten geselecteerd", None)
+        if selected_docenten: st.success("Docenten geselecteerd!")
 
-# ---------- Stap 4: ICS downloaden ----------
+# Download
 if df is not None and selected_docenten:
     with safe_section("ICS genereren en downloadknoppen tonen"):
-        st.markdown("## Stap 4: Download agenda-bestanden")
-        st.write("Download losse bestanden per docent of alles samen als ZIP.")
-
+        st.markdown("## Download agenda-bestanden")
         ics_dict = {}
         for docent in selected_docenten:
             with st.spinner(f"Genereer ICS voor {docent}..."):
@@ -538,7 +397,7 @@ if df is not None and selected_docenten:
             else:
                 st.warning(f"Geen ICS gegenereerd voor {docent}. Check de debug-info hierboven.")
 
-        # Alles in één ZIP
+        # Alles in een ZIP
         try:
             zip_file_path = "/tmp/docenten_ics.zip"
             with zipfile.ZipFile(zip_file_path, "w") as zipf:
@@ -554,14 +413,11 @@ if df is not None and selected_docenten:
             dbg("ZIP samengesteld met docenten", list(ics_dict.keys()))
         except Exception as e:
             st.error(f"Er is een fout opgetreden bij het maken van het ZIP-bestand:\n{e}")
-            if debug_mode:
-                st.code(traceback.format_exc())
+            if debug_mode: st.code(traceback.format_exc())
 
-# ===============================================================
-# TIPS BIJ TIMEOUTS / SERVER-INSTELLINGEN
-# ===============================================================
+# Tips
 st.caption("""
 Als je een **AxiosError: timeout exceeded** ziet in de front-end:
-- Verhoog de timeout in je front-end (bijv. `axios.defaults.timeout = 120000` voor 2 min).
+- Verhoog de timeout in je front-end (bijv. `axios.defaults.timeout = 120000`).
 - Controleer ook eventuele timeouts in je reverse-proxy of server (bijv. Nginx/Cloudflare).
 """)
