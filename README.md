@@ -201,8 +201,7 @@ Ga handmatig naar <http://localhost:8501>.
 ## 📄 Licentie
 
 Dit project is gelicentieerd onder de **European Union Public License (EUPL)**.  
-De EUPL is een door de Europese Commissie goedgekeurde open source licentie, ontworpen voor software die met publieke middelen ontwikkeld is en teruggegeven wordt aan de samenleving.
-
+De EUPL bestaat om een juridisch geldige, in alle EU-talen beschikbare open-sourcelicentie te bieden die samenwerking en hergebruik van (publiek gefinancierde) software binnen Europa vergemakkelijkt.
 **Waarom EUPL?**
 
 - ✅ Compatibel met andere open source licenties (zoals GPL).  
