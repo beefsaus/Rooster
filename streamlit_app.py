@@ -99,20 +99,19 @@ def dutch_date_str(ts):
         s = s.replace(en, nl)
     return s
 
-def sort_df_chronologically(df, column_vars):
-    """
-    Geef een *kopie* terug die is gesorteerd op datum + starttijd, met hulpkolommen:
-    _dt (Timestamp datum), _tstart (Timestamp tijd op 1900-01-01), en orig_idx (originele index uit df).
-    """
-    out = df.copy()
-    out["orig_idx"] = df.index  # originele index bewaren voor koppeling aan sidebar-keuzes
-    out["_dt"] = pd.to_datetime(out[column_vars["Datum"]], dayfirst=True, errors="coerce")
-    out["_tstart"] = out[column_vars["Van"]].apply(parse_time)
-    out["_tstart"] = out["_tstart"].apply(
-        lambda t: pd.Timestamp.combine(pd.Timestamp("1900-01-01"), t) if pd.notna(t) else pd.NaT
-    )
-    out = out.sort_values(["_dt", "_tstart", column_vars["Beschrijving NL"]], kind="mergesort").reset_index(drop=True)
-    return out
+def parse_time(time_str):
+    """Zet '08:30' om naar time(). Valt terug op 00:00 bij fouten (met debugmelding)."""
+    if isinstance(time_str, str):
+        try:
+            return datetime.strptime(time_str.strip(), "%H:%M").time()
+        except Exception:
+            dbg("⚠️ Onverwacht tijdformaat aangetroffen", time_str)
+            return dt_time(0, 0)
+    elif isinstance(time_str, dt_time):
+        return time_str
+    else:
+        dbg("⚠️ Tijdveld is geen tekst of tijdobject", str(type(time_str)))
+        return dt_time(0, 0)
 
 def split_docenten(docent_cell):
     """
@@ -130,18 +129,47 @@ def is_allen_only(row, col):
     teachers = [t.lower() for t in split_docenten(row[col])]
     return "allen" in teachers and len(teachers) == 1
 
+def sort_df_chronologically(df, column_vars):
+    """
+    Geef een *kopie* terug die is gesorteerd op datum + starttijd, met hulpkolommen:
+    _dt (Timestamp datum), _tstart (Timestamp tijd op 1900-01-01), en orig_idx (originele index uit df).
+    """
+    out = df.copy()
+    out["orig_idx"] = df.index  # originele index bewaren voor koppeling aan sidebar-keuzes
+    out["_dt"] = pd.to_datetime(out[column_vars["Datum"]], dayfirst=True, errors="coerce")
+    out["_tstart"] = out[column_vars["Van"]].apply(parse_time)
+    out["_tstart"] = out["_tstart"].apply(
+        lambda t: pd.Timestamp.combine(pd.Timestamp("1900-01-01"), t) if pd.notna(t) else pd.NaT
+    )
+    out = out.sort_values(["_dt", "_tstart", column_vars["Beschrijving NL"]], kind="mergesort").reset_index(drop=True)
+    return out
+
 def get_serie_info(row, df, column_vars):
-    """Zoek in dezelfde dataset naar andere regels met zelfde beschrijving + studentengroep."""
-    serie_rows = df[(df[column_vars["Beschrijving NL"]] == row[column_vars["Beschrijving NL"]]) &
-                    (df[column_vars["Student groep"]] == row[column_vars["Student groep"]])]
-    info_lines = []
+    """
+    Andere regels met dezelfde beschrijving + studentengroep.
+    Toon datum erbij en verwijder dubbelen.
+    """
+    same_desc = df[column_vars["Beschrijving NL"]] == row[column_vars["Beschrijving NL"]]
+    same_grp  = df[column_vars["Student groep"]]   == row[column_vars["Student groep"]]
+    serie_rows = df[same_desc & same_grp]
+
+    lines, seen = [], set()
     for _, srow in serie_rows.iterrows():
-        if srow.name != row.name:
-            teacher_list = split_docenten(srow[column_vars["Docenten"]])
-            teacher_str = ", ".join(teacher_list)
-            zaal = srow[column_vars["Zaal"]]
-            info_lines.append(f"{teacher_str} (lokaal: {zaal})")
-    return info_lines
+        if srow.name == row.name:
+            continue
+        dt = srow.get("_dt")
+        if pd.isna(dt):
+            dt = pd.to_datetime(srow[column_vars["Datum"]], dayfirst=True, errors="coerce")
+        date_txt = dutch_date_str(dt)
+
+        teacher_list = split_docenten(srow[column_vars["Docenten"]])
+        teacher_str  = ", ".join(teacher_list)
+        zaal         = srow[column_vars["Zaal"]]
+        line = f"{date_txt} – {teacher_str} (lokaal: {zaal})"
+        if line not in seen:
+            seen.add(line)
+            lines.append(line)
+    return lines
 
 def autodetect_date_column(df):
     for col in df.columns:
@@ -191,25 +219,10 @@ def autodetect_docenten(df):
             return col
     return None
 
-def parse_time(time_str):
-    """Zet '08:30' om naar time(). Valt terug op 00:00 bij fouten (met debugmelding)."""
-    if isinstance(time_str, str):
-        try:
-            return datetime.strptime(time_str.strip(), "%H:%M").time()
-        except Exception:
-            dbg("⚠️ Onverwacht tijdformaat aangetroffen", time_str)
-            return dt_time(0, 0)
-    elif isinstance(time_str, dt_time):
-        return time_str
-    else:
-        dbg("⚠️ Tijdveld is geen tekst of tijdobject", str(type(time_str)))
-        return dt_time(0, 0)
-
-def get_lesson_history(selected_columns, docent, group, current_pos, df_sorted, history_type):
+def get_lesson_history(selected_columns, docent, group, current_pos, df_sorted, history_type, current_desc=None):
     """
-    Bouw een lijst met eerdere/komende lessen voor deze docent + groep.
-    LET OP: df_sorted moet al chronologisch gesorteerd en 'vlak' zijn (reset_index).
-    current_pos is de *positionele* index (0..n-1) binnen df_sorted.
+    Lijst met eerdere/komende lessen voor docent + groep, beperkt tot dezelfde beschrijving (indien meegegeven).
+    df_sorted: al chronologisch gesorteerd; current_pos is positionele index binnen df_sorted.
     """
     lessons = []
     docent_l = (docent or "").strip().lower()
@@ -221,7 +234,10 @@ def get_lesson_history(selected_columns, docent, group, current_pos, df_sorted, 
 
     for _, row in rows.iterrows():
         teachers_in_row = [t.strip().lower() for t in split_docenten(row.get(selected_columns["Docenten"], ""))]
-        if docent_l in teachers_in_row and row.get(selected_columns["Student groep"]) == group:
+        same_teacher = docent_l in teachers_in_row
+        same_group   = row.get(selected_columns["Student groep"]) == group
+        same_desc    = (current_desc is None) or (row.get(selected_columns["Beschrijving NL"]) == current_desc)
+        if same_teacher and same_group and same_desc:
             dt = row.get("_dt")
             besch = row.get(selected_columns["Beschrijving NL"], "")
             lessons.append(f"{besch} , {dutch_date_str(dt)}")
@@ -281,8 +297,11 @@ def generate_ics_bytes(docent, df_filtered, df_full, column_vars, include_allen_
                 description = f"{row[column_vars['Beschrijving NL']]} - Groep: {row[column_vars['Student groep']]}"
                 description += f"\nLokaal: {row[column_vars['Zaal']]}"
 
-                prev_lessons = get_lesson_history(column_vars, docent, row[column_vars["Student groep"]], pos, teacher_df, "previous")
-                fut_lessons  = get_lesson_history(column_vars, docent, row[column_vars["Student groep"]], pos, teacher_df, "future")
+                current_desc = row[column_vars["Beschrijving NL"]]
+                prev_lessons = get_lesson_history(column_vars, docent, row[column_vars["Student groep"]],
+                                                  pos, teacher_df, "previous", current_desc)
+                fut_lessons  = get_lesson_history(column_vars, docent, row[column_vars["Student groep"]],
+                                                  pos, teacher_df, "future",  current_desc)
                 if prev_lessons:
                     description += "\n\nVorige lessen:\n" + "\n".join(prev_lessons)
                 if fut_lessons:
@@ -334,8 +353,11 @@ def generate_ics_bytes(docent, df_filtered, df_full, column_vars, include_allen_
                     description = f"{row[column_vars['Beschrijving NL']]} - Groep: {row[column_vars['Student groep']]}"
                     description += f"\nLokaal: {row[column_vars['Zaal']]}"
 
-                    prev_lessons = get_lesson_history(column_vars, "allen", row[column_vars["Student groep"]], pos, allen_df, "previous")
-                    fut_lessons  = get_lesson_history(column_vars, "allen", row[column_vars["Student groep"]], pos, allen_df, "future")
+                    current_desc = row[column_vars["Beschrijving NL"]]
+                    prev_lessons = get_lesson_history(column_vars, "allen", row[column_vars["Student groep"]],
+                                                      pos, allen_df, "previous", current_desc)
+                    fut_lessons  = get_lesson_history(column_vars, "allen", row[column_vars["Student groep"]],
+                                                      pos, allen_df, "future",  current_desc)
                     if prev_lessons:
                         description += "\n\nVorige lessen:\n" + "\n".join(prev_lessons)
                     if fut_lessons:
