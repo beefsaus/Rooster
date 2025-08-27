@@ -58,7 +58,8 @@ openpyxl>=3.1
 ## 🚀 Windows Quickstart (Desktop)
 
 Plaats de projectmap op je Bureaublad (Desktop).  
-Geen virtuele omgeving nodig.
+Probeer eerst de start_windows.bat
+Werkt het niet? Volg dan de onderstaande stappen. 
 
 ### Stap 0: Download & installeer Python
 
