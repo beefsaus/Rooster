@@ -35,181 +35,184 @@ Voor gebruikers met nul technische kennis. Deze README bevat twee stap-voor-stap
 
 ## 📦 Bestanden in deze repo
 
+```text
 .
 ├─ app.py                # De Streamlit-app
 ├─ requirements.txt      # Python packages
 └─ README.md             # Deze handleiding
+```
 
+### requirements.txt
+
+```text
 streamlit>=1.33
 pandas>=2.0
 icalendar>=5.0
 openpyxl>=3.1
+```
 
-Waarom openpyxl? Pandas gebruikt dit om .xlsx te lezen.
+**Waarom `openpyxl`?** Pandas gebruikt dit om `.xlsx` te lezen.
 
-🚀 Windows Quickstart (Desktop)
+---
 
-Plaats de projectmap op je Bureaublad (Desktop).
+## 🚀 Windows Quickstart (Desktop)
+
+Plaats de projectmap op je Bureaublad (Desktop).  
 Geen virtuele omgeving nodig.
 
-Stap 0: Download & installeer Python
+### Stap 0: Download & installeer Python
 
-Ga naar https://www.python.org/downloads/
+1. Ga naar <https://www.python.org/downloads/>  
+2. Klik op **Download Python 3.x** (3.10 of 3.11 aangeraden).  
+3. **Belangrijk:** vink *“Add Python to PATH”* aan tijdens de installatie.  
+4. Klik **Install Now** en wacht tot de installatie voltooid is.
 
-Klik op Download Python 3.x (3.10 of 3.11 aangeraden).
+### Stap 1: Download de projectbestanden
 
-Belangrijk: vink “Add Python to PATH” aan tijdens de installatie.
+1. Klik in GitHub op **Code → Download ZIP**.  
+2. Pak het ZIP-bestand uit op je Bureaublad (Desktop) → je krijgt de map **RoosterOmzetter** met o.a. `app.py` en `requirements.txt`.
 
-Klik Install Now en wacht tot de installatie voltooid is.
+### Stap 2: Open de opdrachtprompt (CMD) en ga naar de map
 
-Stap 1: Download de projectbestanden
-
-Klik in GitHub op Code → Download ZIP.
-
-Pak het ZIP-bestand uit op je Bureaublad (Desktop) → je krijgt de map RoosterOmzetter met o.a. app.py en requirements.txt.
-
-Stap 2: Open de opdrachtprompt (CMD) en ga naar de map
+```bat
 cd %HOMEPATH%\Desktop\RoosterOmzetter
+```
 
-Stap 3: Installeer de benodigdheden
+### Stap 3: Installeer de benodigdheden
+
+```bat
 pip install -r requirements.txt
+```
 
-Stap 4: Start de app
+### Stap 4: Start de app
+
+```bat
 streamlit run app.py
+```
 
+De app opent automatisch in je browser. Zo niet, ga handmatig naar: <http://localhost:8501>.
 
-De app opent automatisch in je browser. Zo niet, ga handmatig naar: http://localhost:8501
-.
+---
 
-☁️ Handleiding 1 – Streamlit Community Cloud (géén install nodig)
+## ☁️ Handleiding 1 – Streamlit Community Cloud (géén install nodig)
 
-Dit is de makkelijkste manier: app draait “in de cloud”, jij opent een link.
+Dit is de makkelijkste manier: de app draait “in de cloud”, jij opent een link.
 
-Stap 1: Fork/Importeer de repo
+### Stap 1: Fork/Importeer de repo
 
-Maak (of gebruik) een GitHub-account.
+- Maak (of gebruik) een GitHub-account.  
+- Klik op **Fork** (of **Use this template**) om deze repo in jouw account te plaatsen.
 
-Klik op Fork (of Use this template) om deze repo in jouw account te plaatsen.
+### Stap 2: Deployen op Streamlit
 
-Stap 2: Deployen op Streamlit
+1. Ga naar <https://share.streamlit.io> en log in met GitHub.  
+2. Klik **New app** → kies jouw repo → branch (meestal `main`) → app file: `app.py`.  
+3. Klik **Deploy**.
 
-Ga naar https://share.streamlit.io
- en log in met GitHub.
+### Stap 3: Gebruik de app
 
-Klik New app → kies jouw repo → branch (meestal main) → app file: app.py.
+- Je krijgt een publieke URL. Deelbaar en direct bruikbaar.  
+- Upload je Excel → controleer kolommen → kies docent(en) → **Download ICS of ZIP**.
 
-Klik Deploy.
+**Belangrijke hints voor Streamlit Cloud**
 
-Stap 3: Gebruik de app
+- **Python-versie:** kies 3.10 of 3.11 in *Advanced settings* als nodig.  
+- **Timeouts:** grote Excelbestanden kunnen langer duren. Zie ook de timeout-tips onderaan in de app.  
+- **Secrets:** niet nodig voor deze app.
 
-Je krijgt een publieke URL. Deelbaar en direct bruikbaar.
+---
 
-Upload je Excel → controleer kolommen → kies docent(en) → Download ICS of ZIP.
+## 📥 ICS importeren (korte uitleg)
 
-Belangrijke hints voor Streamlit Cloud
+**Google Calendar (web):**  
+Instellingen tandwiel → **Instellingen** → links **Importeren en exporteren** → **Bestand importeren** → kies `.ics` → kies kalender → **Importeren**.
 
-Python-versie: kies 3.10 of 3.11 in Advanced settings als nodig.
+**Outlook (desktop):**  
+Dubbelklik `.ics` → **Openen als nieuwe kalender** → sleep items naar je eigen kalender, of **Opslaan & sluiten**.  
+(*Outlook web:* Agenda → **Toevoegen** → **Van bestand uploaden**.)
 
-Timeouts: grote Excelbestanden kunnen langer duren. Zie ook de timeout-tips onderaan in de app.
+**Apple Calendar (macOS):**  
+Dubbelklik `.ics` → kies kalender → **OK**.
 
-Geen secrets nodig voor deze app.
+---
 
-📥 ICS importeren (korte uitleg)
+## ⚙️ Sidebar-opties & debug
 
-Google Calendar (web):
-Instellingen tandwiel → Instellingen → links Importeren en exporteren → Bestand importeren → kies .ics → kies kalender → Importeren.
+- **Debug-modus:** toont extra uitleg, tussenstappen en eventuele fouten (stacktrace).  
+- **Evenementen voor `allen` opnemen:** voeg algemene events toe, met per event een checkbox om op te nemen/uit te sluiten.
 
-Outlook (desktop):
-Dubbelklik .ics → Openen als nieuwe kalender → sleep items naar je eigen kalender, of Opslaan & sluiten.
-(Outlook web: Agenda → Toevoegen → Van bestand uploaden.)
+---
 
-Apple Calendar (macOS):
-Dubbelklik .ics → kies kalender → OK.
+## 📋 Voorbeeldrooster (Markdown-tabel)
 
-⚙️ Sidebar-opties & debug
+**Formaatregels:**
 
-Debug-modus: toont extra uitleg, tussenstappen en eventuele fouten (stacktrace).
+- **Datum:** `DD-MM-JJJJ`  
+- **Tijd:** `HH:MM` (24-uurs)  
+- Meerdere docenten scheiden met komma/slash/semicolon  
+- Gebruik `allen` (exact) als event voor iedereen  
+- **Zaal** mag leeg blijven (wordt “Onbekend”)
 
-Evenementen voor allen opnemen: voeg algemene events toe, met per event een checkbox om op te nemen/uitsluiten.
+| Datum      | Van   | Tot   | Student groep | Zaal  | Beschrijving NL                         | Docenten     |
+|------------|-------|-------|---------------|-------|------------------------------------------|--------------|
+| 02-09-2025 | 08:30 | 10:00 | CRIM-1A       | B.1.12| Inleiding Criminologie                   | Jan          |
+| 02-09-2025 | 10:15 | 12:00 | CRIM-1A       | B.1.12| Werkgroep Daders & Slachtoffers          | Kees, Anna   |
+| 02-09-2025 | 13:00 | 15:00 | CRIM-2B       |       | Intervisie                               | allen        |
+| 03-09-2025 | 09:00 | 10:30 | MED-3C        | C.2.05| ABCDE                                    | Klaas/Anna   |
+| 03-09-2025 | 10:45 | 12:15 | MED-3C        | C.2.05| Practicum ECG                            | Anna         |
+| 03-09-2025 | 13:15 | 14:45 | CRIM-1A       | B.1.12| Gastcollege Forensische Psychiatrie      | Joost        |
 
-📋 Voorbeeldrooster (Markdown-tabel)
+---
 
-Formaatregels:
+## 🧠 Veelvoorkomende problemen & oplossingen
 
-Datum: DD-MM-JJJJ
-
-Tijd: HH:MM (24-uurs)
-
-Meerdere docenten scheiden met komma/slash/semicolon
-
-Gebruik allen (exact) als event voor iedereen
-
-Zaal mag leeg blijven (wordt “Onbekend”)
-
-Datum	Van	Tot	Student groep	Zaal	Beschrijving NL	Docenten
-02-09-2025	08:30	10:00	CRIM-1A	B.1.12	Inleiding Criminologie	Jan
-02-09-2025	10:15	12:00	CRIM-1A	B.1.12	Werkgroep Daders & Slachtoffers	Kees, Anna
-02-09-2025	13:00	15:00	CRIM-2B		Intervisie	allen
-03-09-2025	09:00	10:30	MED-3C	C.2.05	ABCDE	Klaas/Anna
-03-09-2025	10:45	12:15	MED-3C	C.2.05	Practicum ECG	Anna
-03-09-2025	13:15	14:45	CRIM-1A	B.1.12	Gastcollege Forensische Psychiatrie	Joost
-🧠 Veelvoorkomende problemen & oplossingen
-
-“Engine openpyxl not found / Missing optional dependency 'openpyxl'”
-
+**“Engine openpyxl not found / Missing optional dependency 'openpyxl'”**  
+Installeer `openpyxl`:
+```bat
 pip install openpyxl
+```
 
+**App start, maar browser opent niet automatisch**  
+Ga handmatig naar <http://localhost:8501>.
 
-App start, maar browser opent niet automatisch
-→ Ga handmatig naar http://localhost:8501
-.
+**Fout bij het lezen van het Excel-bestand**  
+- Is het echt `.xlsx` (geen `.csv`, `.xlsm`, etc.)?  
+- Datumkolom aanwezig en geldig?  
+- Tijden in `HH:MM` (bijv. `08:30`).
 
-Fout bij het lezen van het Excel-bestand
+**Niets verschijnt bij “Docenten”**  
+- Controleer of de docenten-kolom bestaat en is toegewezen.  
+- Scheid meerdere docenten met spatie/komma/slash/`;`.  
+- Voorbeeld: `Piet, Klaas/Anna`.
 
-Is het echt .xlsx (geen .csv, .xlsm, etc.)?
+**“AxiosError: timeout exceeded” in de UI**  
+- Zie tips in de app om timeouts te verhogen.  
+- Probeer een kleiner Excel-bestand.
 
-Datumkolom aanwezig en geldig?
+---
 
-Tijden in HH:MM (bijv. 08:30).
+## 📄 Licentie
 
-Niets verschijnt bij “Docenten”
-
-Controleer of de docenten-kolom bestaat en is toegewezen.
-
-Scheid meerdere docenten met spatie/komma/slash/;.
-
-Voorbeeld: Piet, Klaas/Anna.
-
-“AxiosError: timeout exceeded” in de UI
-
-Zie tips in de app om timeouts te verhogen.
-
-Probeer een kleiner Excel-bestand.
-
-📄 Licentie
-
-Dit project is gelicentieerd onder de European Union Public License (EUPL).
+Dit project is gelicentieerd onder de **European Union Public License (EUPL)**.  
 De EUPL is een door de Europese Commissie goedgekeurde open source licentie, ontworpen voor software die met publieke middelen ontwikkeld is en teruggegeven wordt aan de samenleving.
 
-Waarom EUPL?
+**Waarom EUPL?**
 
-✅ Juridisch stevig binnen de Europese Unie.
+- ✅ Juridisch stevig binnen de Europese Unie.  
+- ✅ Compatibel met andere open source licenties (zoals GPL).  
+- ✅ Waarborgt dat software ontwikkeld met publiek geld ook publiek beschikbaar blijft.  
+- ✅ Past bij Open Science en FAIR-principes (Findable, Accessible, Interoperable, Reusable).
 
-✅ Compatibel met andere open source licenties (zoals GPL).
+**Wat betekent dit voor jou?**
 
-✅ Waarborgt dat software ontwikkeld met publiek geld ook publiek beschikbaar blijft.
+- Je mag de software vrij gebruiken, delen en aanpassen (ook commercieel).  
+- Verspreid je de software (met of zonder aanpassingen), dan gebeurt dit onder dezelfde EUPL.
 
-✅ Past bij Open Science en FAIR-principes (Findable, Accessible, Interoperable, Reusable).
+**📖 Meer info:** Officiële EUPL-tekst: <https://joinup.ec.europa.eu/collection/eupl/eupl-text-11-12>
 
-Wat betekent dit voor jou?
+---
 
-Je mag de software vrij gebruiken, delen en aanpassen (ook commercieel).
+## ℹ️ Transparantieverklaring
 
-Verspreid je de software (met of zonder aanpassingen), dan gebeurt dit onder dezelfde EUPL.
-
-📖 Meer info: Officiële EUPL-tekst
-
-ℹ️ Transparantieverklaring
-
-Delen van deze documentatie zijn mede opgesteld met behulp van ChatGPT (AI-taalmodel van OpenAI).
+Delen van deze documentatie zijn mede opgesteld met behulp van ChatGPT (AI-taalmodel van OpenAI).  
 De inhoud is door een menselijke beheerder gecontroleerd en waar nodig aangepast.
