@@ -1,6 +1,6 @@
 # Rooster Omzetter 📅
 
-Een simpele Streamlit-app die een Excel-rooster (`.xlsx`) omzet naar **ICS-agenda’s per docent**.  
+Een simpele Streamlit-app die een Excel-rooster (`.xlsx`) omzet naar **ICS-agenda’s per persoon**.  
 Importeer de bestanden daarna in **Outlook, Google Calendar** of **Apple Calendar**.
 
 ---
@@ -113,7 +113,7 @@ Dit is de makkelijkste manier: de app draait “in de cloud”, jij opent een li
 ### Stap 2: Deployen op Streamlit
 
 1. Ga naar <https://share.streamlit.io> en log in met GitHub.  
-2. Klik **New app** → kies jouw repo → branch (meestal `main`) → app file: `app.py`.  
+2. Klik **New app** → kies jouw repo → branch (meestal `main`) → app file: `streamlit_app.py`.  
 3. Klik **Deploy**.
 
 ### Stap 3: Gebruik de app
