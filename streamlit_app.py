@@ -102,15 +102,18 @@ def dutch_date_str(ts):
 def sort_df_chronologically(df, column_vars):
     """
     Geef een *kopie* terug die is gesorteerd op datum + starttijd, met hulpkolommen:
-    _dt (Timestamp datum), _tstart (datetime tijd, op 1900-01-01).
+    _dt (Timestamp datum), _tstart (Timestamp tijd op 1900-01-01), en orig_idx (originele index uit df).
     """
     out = df.copy()
+    out["orig_idx"] = df.index  # <-- nieuw: originele index bewaren
     out["_dt"] = pd.to_datetime(out[column_vars["Datum"]], dayfirst=True, errors="coerce")
     out["_tstart"] = out[column_vars["Van"]].apply(parse_time)
-    # zet _tstart om naar vergelijkbare objecten (Timestamp) voor sort
-    out["_tstart"] = out["_tstart"].apply(lambda t: pd.Timestamp.combine(pd.Timestamp("1900-01-01"), t) if pd.notna(t) else pd.NaT)
+    out["_tstart"] = out["_tstart"].apply(
+        lambda t: pd.Timestamp.combine(pd.Timestamp("1900-01-01"), t) if pd.notna(t) else pd.NaT
+    )
     out = out.sort_values(["_dt", "_tstart", column_vars["Beschrijving NL"]], kind="mergesort").reset_index(drop=True)
     return out
+
 
 
 def split_docenten(docent_cell):
@@ -330,51 +333,61 @@ def generate_ics_bytes(docent, df_filtered, df_full, column_vars, include_allen_
 
 
         # --- Eventuele 'allen'-regels meenemen (alleen als gebruiker dat wil)
-        if include_allen_var:
-            allen_df = base_sorted[base_sorted.apply(
-                lambda row: is_allen_only(row, column_vars["Docenten"]),
-                axis=1
-            )].reset_index(drop=True)
-            dbg("Aantal 'allen'-regels", len(allen_df))
-        
-            for pos, row in allen_df.iterrows():
-                try:
-                    # Als gebruiker in de sidebar een regel heeft uitgezet, overslaan
-                    if "allen_inclusion" in st.session_state and not st.session_state.allen_inclusion.get(idx, True):
-                        dbg("Allen-regel uitgesloten door gebruiker", idx)
-                        continue
+   # --- Eventuele 'allen'-regels meenemen (alleen als gebruiker dat wil)
+if include_allen_var:
+    allen_df = base_sorted[base_sorted.apply(
+        lambda row: is_allen_only(row, column_vars["Docenten"]),
+        axis=1
+    )].reset_index(drop=True)
+    dbg("Aantal 'allen'-regels", len(allen_df))
 
-                    datum = row[column_vars["Datum"]]
-                    van_tijd = parse_time(row[column_vars["Van"]])
-                    tot_tijd = parse_time(row[column_vars["Tot"]])
-                    datum_parsed = pd.to_datetime(datum, dayfirst=True).date()
-                    dtstart = datetime.combine(datum_parsed, van_tijd)
-                    dtend = datetime.combine(datum_parsed, tot_tijd)
+    for pos, row in allen_df.iterrows():
+        try:
+            # Respecteer de keuzes uit de sidebar: daar zijn keys gebaseerd op de *originele* df-index
+            orig_idx = row.get("orig_idx", None)
+            if "allen_inclusion" in st.session_state and orig_idx is not None:
+                if not st.session_state.allen_inclusion.get(orig_idx, True):
+                    dbg("Allen-regel uitgesloten door gebruiker", orig_idx)
+                    continue
 
-                    event = Event()
-                    teacher_list = split_docenten(row[column_vars["Docenten"]])
-                    teacher_str = ", ".join(teacher_list)
-                    event_summary = f"{row[column_vars['Beschrijving NL']]} - {teacher_str}"
-                    event.add("summary", event_summary)
-                    event.add("dtstart", dtstart)
-                    event.add("dtend", dtend)
+            datum_parsed = to_dt(row[column_vars["Datum"]]).date()
+            van_tijd = parse_time(row[column_vars["Van"]])
+            tot_tijd = parse_time(row[column_vars["Tot"]])
+            dtstart = datetime.combine(datum_parsed, van_tijd)
+            dtend = datetime.combine(datum_parsed, tot_tijd)
 
-                    description = f"{row[column_vars['Beschrijving NL']]} - Groep: {row[column_vars['Student groep']]}"
-                    description += f"\nLokaal: {row[column_vars['Zaal']]}"
+            event = Event()
+            teacher_list = split_docenten(row[column_vars["Docenten"]])
+            teacher_str = ", ".join(teacher_list)
+            event_summary = f"{row[column_vars['Beschrijving NL']]} - {teacher_str}"
+            event.add("summary", event_summary)
+            event.add("dtstart", dtstart)
+            event.add("dtend", dtend)
 
-                     prev_lessons = get_lesson_history(column_vars, "allen", row[column_vars["Student groep"]], pos, allen_df, "previous")
-                     fut_lessons  = get_lesson_history(column_vars, "allen", row[column_vars["Student groep"]], pos, allen_df, "future")
-                                # ... (rest ongewijzigd)
-                    if prev_lessons:
-                        description += "\n\nVorige lessen:\n" + "\n".join(prev_lessons)
-                    if fut_lessons:
-                        description += "\n\nToekomstige lessen:\n" + "\n".join(fut_lessons)
-                    serie_info = get_serie_info(row, df_full, column_vars)
-                    if serie_info:
-                        description += "\n\nAndere lessen in deze serie:\n" + "\n".join(serie_info)
+            description = f"{row[column_vars['Beschrijving NL']]} - Groep: {row[column_vars['Student groep']]}"
+            description += f"\nLokaal: {row[column_vars['Zaal']]}"
 
-                    event.add("description", description)
-                    cal.add_component(event)
+            # LET OP: geen rare indent en gebruik pos i.p.v. idx
+            prev_lessons = get_lesson_history(column_vars, "allen", row[column_vars["Student groep"]], pos, allen_df, "previous")
+            fut_lessons  = get_lesson_history(column_vars, "allen", row[column_vars["Student groep"]], pos, allen_df, "future")
+            if prev_lessons:
+                description += "\n\nVorige lessen:\n" + "\n".join(prev_lessons)
+            if fut_lessons:
+                description += "\n\nToekomstige lessen:\n" + "\n".join(fut_lessons)
+
+            # Voor serie-informatie kun je net als bij docentengebeurtenissen de gesorteerde basis gebruiken
+            serie_info = get_serie_info(row, base_sorted, column_vars)
+            if serie_info:
+                description += "\n\nAndere lessen in deze serie:\n" + "\n".join(serie_info)
+
+            event.add("description", description)
+            cal.add_component(event)
+
+        except Exception as inner_e:
+            st.warning(f"'Allen'-regel overgeslagen (pos={pos}) door fout: {inner_e}")
+            if debug_mode:
+                st.code(traceback.format_exc())
+
 
                 except Exception as inner_e:
                     st.warning(f"'Allen'-regel overgeslagen (idx={idx}) door fout: {inner_e}")
