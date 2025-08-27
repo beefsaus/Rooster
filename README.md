@@ -7,7 +7,7 @@ Importeer de bestanden daarna in **Outlook, Google Calendar** of **Apple Calenda
 
 ## Voor wie?
 
-Voor gebruikers met nul technische kennis. Deze README bevat twee stap-voor-stap handleidingen:
+Deze README bevat twee stap-voor-stap handleidingen:
 
 1. **Streamlit Community Cloud** (snel online gebruiken, geen installatie).  
 2. **Windows Quickstart (Desktop)** (lokaal draaien via Python, zonder virtuele omgeving).
@@ -16,8 +16,8 @@ Voor gebruikers met nul technische kennis. Deze README bevat twee stap-voor-stap
 
 ## ✨ Functies
 
-- Excel (`.xlsx`) inlezen en kolommen automatisch herkennen (datum, tijden, groep, zaal, beschrijving, docenten).
-- Meerdere docenten selecteren → per docent één ICS.
+- Excel (`.xlsx`) inlezen en kolommen automatisch herkennen (datum, tijden, groep, zaal, beschrijving, personen).
+- Meerdere personen selecteren → per persoon één ICS.
 - Optioneel: “allen”-events meenemen en per event aan/uit zetten.
 - Slimme beschrijvingen in ICS: lokaal, groep, vorige/toekomstige lessen, en andere lessen uit dezelfde serie.
 - Debug-modus met uitbreidbare logs en stap-tijden (handig bij problemen).
@@ -71,7 +71,7 @@ Werkt het niet? Volg dan de onderstaande stappen.
 ### Stap 1: Download de projectbestanden
 
 1. Klik in GitHub op **Code → Download ZIP**.  
-2. Pak het ZIP-bestand uit op je Bureaublad (Desktop) → je krijgt de map **RoosterOmzetter** met o.a. `app.py` en `requirements.txt`.
+2. Pak het ZIP-bestand uit op je Bureaublad (Desktop) → je krijgt de map **RoosterOmzetter** met o.a. `streamlit_app.py` en `requirements.txt`.
 
 ### Stap 2: Open de opdrachtprompt (CMD) en ga naar de map
 
@@ -88,7 +88,7 @@ pip install -r requirements.txt
 ### Stap 4: Start de app
 
 ```bat
-streamlit run app.py
+streamlit run streamlit_app.py
 ```
 
 De app opent automatisch in je browser. Zo niet, ga handmatig naar: <http://localhost:8501>.
