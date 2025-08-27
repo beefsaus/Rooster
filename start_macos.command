@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Rooster Omzetter - Super Simpele Starter (macOS)
-# Gebruik: dubbelklik dit bestand (start_macos_noob.command)
+# Gebruik: dubbelklik dit bestand (start_macos.command)
 # Doel: stap-voor-stap begeleiden, toestemming vragen, duidelijke fouten tonen.
 set -e
 
